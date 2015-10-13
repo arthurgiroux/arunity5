@@ -204,7 +204,13 @@ public class ARCamera : MonoBehaviour
 				Matrix4x4 pose;
 				if (Optical && opticalSetupOK) {
 					pose = (opticalViewMatrix * marker.TransformationMatrix).inverse;
-				} else {
+				}
+				else if (StereoEye == ViewEye.Right)
+				{
+					pose = marker.TransformationMatrixR.inverse;
+				}
+				else
+				{
 					pose = marker.TransformationMatrix.inverse;
 				}
 				

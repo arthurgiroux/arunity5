@@ -109,6 +109,8 @@ public class ARMarkerEditor : Editor
 			m.MarkerType = t;
 			m.Load();
 		}
+
+		m.videoIsStereo = EditorGUILayout.Toggle("Stereo augmentation", m.videoIsStereo);
 		
 		// Description of the type of marker
         EditorGUILayout.LabelField("Description", ARMarker.MarkerTypeNames[m.MarkerType]);

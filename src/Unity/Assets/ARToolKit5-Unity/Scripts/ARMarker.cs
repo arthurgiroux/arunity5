@@ -137,6 +137,9 @@ public class ARMarker : MonoBehaviour
     // Realtime tracking information
     private bool visible = false;                                           // Marker is visible or not
 	private Matrix4x4 transformationMatrix;                                 // Full transformation matrix as a Unity matrix
+	private Matrix4x4 transformationMatrixR;                                 // Full Right transformation matrix as a Unity matrix
+
+	public bool videoIsStereo; // whether or not the augmentation will be displayed on both the left and right images
 //    private Quaternion rotation = new Quaternion(0.0f, 0.0f, 0.0f, 1.0f);   // Rotation corrected for Unity
 //    private Vector3 position = new Vector3(0.0f, 0.0f, 0.0f);               // Position corrected for Unity
     
@@ -321,7 +324,16 @@ public class ARMarker : MonoBehaviour
 		// Query visibility if we are running in the Player.
         if (Application.isPlaying) {
 
-			visible = PluginFunctions.arwQueryMarkerTransformation(UID, matrixRawArray);
+			float[] matrixRawArrayRight = new float[16];
+
+			if (videoIsStereo)
+			{
+				visible = PluginFunctions.arwQueryMarkerTransformationStereo(UID, matrixRawArray, matrixRawArrayRight);
+			}
+			else
+			{
+				visible = PluginFunctions.arwQueryMarkerTransformation(UID, matrixRawArray);
+			}
 			//ARController.Log(LogTag + "ARMarker.Update() UID=" + UID + ", visible=" + visible);
 			
             if (visible) {
@@ -337,6 +349,22 @@ public class ARMarker : MonoBehaviour
 				// Need to convert to Unity's left-hand coordinate system where marker lies in x-y plane with right in direction of +x,
 				// up in direction of +y, and forward (towards viewer) in direction of -z.
 				transformationMatrix = ARUtilityFunctions.LHMatrixFromRHMatrix(matrixRaw);
+
+				if (videoIsStereo)
+				{
+					matrixRawArrayRight[12] *= 0.001f; // Scale the position from ARToolKit units (mm) into Unity units (m).
+					matrixRawArrayRight[13] *= 0.001f;
+					matrixRawArrayRight[14] *= 0.001f;
+
+					Matrix4x4 matrixRawRight = ARUtilityFunctions.MatrixFromFloatArray(matrixRawArrayRight);
+					//ARController.Log("arwQueryMarkerTransformation(" + UID + ") got matrix: [" + Environment.NewLine + matrixRaw.ToString("F3").Trim() + "]");
+
+					// ARToolKit uses right-hand coordinate system where the marker lies in x-y plane with right in direction of +x,
+					// up in direction of +y, and forward (towards viewer) in direction of +z.
+					// Need to convert to Unity's left-hand coordinate system where marker lies in x-y plane with right in direction of +x,
+					// up in direction of +y, and forward (towards viewer) in direction of -z.
+					transformationMatrixR = ARUtilityFunctions.LHMatrixFromRHMatrix(matrixRawRight);
+				}
 			}
 		}
     }
@@ -368,6 +396,14 @@ public class ARMarker : MonoBehaviour
             return transformationMatrix;
         }
     }
+
+	public Matrix4x4 TransformationMatrixR
+	{
+		get
+		{
+			return transformationMatrixR;
+		}
+	}
 
 //    public Vector3 Position
 //    {
